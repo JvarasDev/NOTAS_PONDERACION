@@ -9,6 +9,19 @@
     "astro": "astro"
   },
   "dependencies": {
-    "astro": "^5.16.4"
+    "astro": "^5.16.4",
+    "framer-motion": "^12.23.25",
+    "html2pdf.js": "^0.12.1",
+    "lucide-react": "^0.556.0",
+    "react": "^19.2.1",
+    "react-countup": "^6.5.3",
+    "react-dom": "^19.2.1"
+  },
+  "devDependencies": {
+    "@astrojs/react": "^4.4.2",
+    "@astrojs/tailwind": "^6.0.2",
+    "@types/react": "^19.2.7",
+    "@types/react-dom": "^19.2.3",
+    "tailwindcss": "^3.4.18"
   }
 }
