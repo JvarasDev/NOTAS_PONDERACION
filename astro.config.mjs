@@ -11,4 +11,10 @@ export default defineConfig({
       applyBaseStyles: false,
     }),
   ],
+  vite: {
+    build: {
+      // Asegurar que los assets se copien correctamente
+      assetsInlineLimit: 0,
+    },
+  },
 });

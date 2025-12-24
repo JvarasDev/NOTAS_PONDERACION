@@ -1,0 +1,198 @@
+/* Estilos para PWA - Instalación y notificaciones */
+
+/* Botón de instalación */
+.pwa-install-button {
+  position: fixed;
+  bottom: 20px;
+  right: 20px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 12px 20px;
+  background: #007AFF;
+  color: white;
+  border: none;
+  border-radius: 24px;
+  font-weight: 600;
+  font-size: 14px;
+  box-shadow: 0 4px 12px rgba(0, 122, 255, 0.3);
+  cursor: pointer;
+  z-index: 9999;
+  transition: all 0.3s ease;
+  animation: slideInUp 0.5s ease;
+}
+
+.pwa-install-button:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 6px 16px rgba(0, 122, 255, 0.4);
+}
+
+.pwa-install-button:active {
+  transform: scale(0.95);
+}
+
+/* Notificación de actualización */
+.pwa-update-notification {
+  position: fixed;
+  top: 20px;
+  right: 20px;
+  z-index: 10000;
+  animation: slideInRight 0.4s ease;
+}
+
+.pwa-update-content {
+  background: white;
+  padding: 16px 20px;
+  border-radius: 16px;
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.15);
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  min-width: 300px;
+}
+
+.pwa-update-content p {
+  margin: 0;
+  font-weight: 600;
+  color: #1D1D1F;
+  flex: 1;
+}
+
+.pwa-update-content button {
+  background: #007AFF;
+  color: white;
+  border: none;
+  padding: 8px 16px;
+  border-radius: 8px;
+  font-weight: 600;
+  font-size: 14px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.pwa-update-content button:hover {
+  background: #0071E3;
+}
+
+/* Mensaje de instalación exitosa */
+.pwa-success-message {
+  position: fixed;
+  top: 20px;
+  left: 50%;
+  transform: translateX(-50%);
+  z-index: 10000;
+  animation: slideInDown 0.4s ease;
+}
+
+.pwa-success-content {
+  background: #34C759;
+  color: white;
+  padding: 12px 24px;
+  border-radius: 16px;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  font-weight: 600;
+  box-shadow: 0 4px 12px rgba(52, 199, 89, 0.3);
+}
+
+/* Estado de conexión */
+.connection-status {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  padding: 12px;
+  text-align: center;
+  font-weight: 600;
+  font-size: 14px;
+  z-index: 9998;
+  animation: slideInDown 0.3s ease;
+}
+
+.connection-status.online {
+  background: #34C759;
+  color: white;
+}
+
+.connection-status.offline {
+  background: #FF9500;
+  color: white;
+}
+
+/* Badge de modo offline en el body */
+body.offline-mode {
+  /* Estilos específicos cuando esté offline - placeholder para futuras mejoras */
+  position: relative;
+}
+
+body.pwa-installed {
+  /* Estilos cuando la app está instalada - placeholder para futuras mejoras */
+  position: relative;
+}
+
+/* Modo oscuro */
+@media (prefers-color-scheme: dark) {
+  .pwa-update-content {
+    background: #1C1C1E;
+    box-shadow: 0 8px 24px rgba(0, 0, 0, 0.5);
+  }
+
+  .pwa-update-content p {
+    color: #FFFFFF;
+  }
+}
+
+/* Animaciones */
+@keyframes slideInUp {
+  from {
+    opacity: 0;
+    transform: translateY(20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes slideInRight {
+  from {
+    opacity: 0;
+    transform: translateX(20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateX(0);
+  }
+}
+
+@keyframes slideInDown {
+  from {
+    opacity: 0;
+    transform: translate(-50%, -20px);
+  }
+  to {
+    opacity: 1;
+    transform: translate(-50%, 0);
+  }
+}
+
+/* Responsive */
+@media (max-width: 768px) {
+  .pwa-install-button {
+    bottom: 16px;
+    right: 16px;
+    padding: 10px 16px;
+    font-size: 13px;
+  }
+
+  .pwa-update-notification {
+    top: 16px;
+    right: 16px;
+    left: 16px;
+  }
+
+  .pwa-update-content {
+    min-width: auto;
+  }
+}

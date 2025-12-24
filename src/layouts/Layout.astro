@@ -17,25 +17,417 @@ const {
 	<head>
 		<meta charset="UTF-8" />
 		<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover" />
+		
+		<!-- PWA Meta Tags -->
 		<meta name="apple-mobile-web-app-capable" content="yes" />
 		<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+		<meta name="apple-mobile-web-app-title" content="Notas" />
+		<meta name="mobile-web-app-capable" content="yes" />
+		<meta name="theme-color" content="#007AFF" />
+		<meta name="msapplication-TileColor" content="#007AFF" />
+		
+		<!-- Manifest -->
+		<link rel="manifest" href="/manifest.json" />
+		
+		<!-- Icons -->
 		<link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+		<link rel="apple-touch-icon" sizes="180x180" href="/icons/icon-192x192.svg" />
+		<link rel="icon" type="image/png" sizes="32x32" href="/icons/icon-192x192.svg" />
+		<link rel="icon" type="image/png" sizes="16x16" href="/icons/icon-192x192.svg" />
+		
+		<!-- SEO -->
 		<meta name="generator" content={Astro.generator} />
 		<meta name="description" content={description} />
+		<meta name="keywords" content="calculadora, notas, promedio, ponderado, educación, estudiantes, exámenes" />
+		
+		<!-- Open Graph -->
+		<meta property="og:type" content="website" />
+		<meta property="og:title" content={title} />
+		<meta property="og:description" content={description} />
+		<meta property="og:image" content="/icons/icon-512x512.png" />
+		
+		<!-- Twitter Card -->
+		<meta name="twitter:card" content="summary" />
+		<meta name="twitter:title" content={title} />
+		<meta name="twitter:description" content={description} />
+		<meta name="twitter:image" content="/icons/icon-512x512.png" />
 		
 		<!-- Fuente Inter (sustituto de SF Pro) -->
 		<link rel="preconnect" href="https://fonts.googleapis.com" />
 		<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
 		<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet" />
 		
-		<title>{title}</title>
-	</head>
-	<body>
-		<slot />
-	</body>
+	<title>{title}</title>
+</head>
+<body>
+	<slot />
+</body>
 </html>
 
+<script is:inline>
+// PWA Manager - Registro e inicialización del Service Worker
+(function() {
+  'use strict';
+
+  if (!('serviceWorker' in navigator)) {
+    console.warn('Service Workers no soportados');
+    return;
+  }
+
+  let deferredPrompt;
+  let isInstalled = false;
+
+  window.addEventListener('load', () => {
+    registerServiceWorker();
+    checkInstallation();
+    setupInstallPrompt();
+    setupOnlineOfflineListeners();
+  });
+
+  async function registerServiceWorker() {
+    try {
+      const registration = await navigator.serviceWorker.register('/sw.js', { scope: '/' });
+      console.log('✅ Service Worker registrado:', registration.scope);
+
+      setInterval(() => registration.update(), 60000);
+
+      registration.addEventListener('updatefound', () => {
+        const newWorker = registration.installing;
+        newWorker.addEventListener('statechange', () => {
+          if (newWorker.state === 'installed' && navigator.serviceWorker.controller) {
+            showUpdateNotification();
+          }
+        });
+      });
+    } catch (error) {
+      console.error('❌ Error al registrar Service Worker:', error);
+    }
+  }
+
+  function showUpdateNotification() {
+    const notification = document.createElement('div');
+    notification.className = 'pwa-update-notification';
+    notification.innerHTML = `
+      <div class="pwa-update-content">
+        <p>🎉 Nueva versión disponible</p>
+        <button id="pwa-reload-btn">Actualizar</button>
+      </div>
+    `;
+    document.body.appendChild(notification);
+    document.getElementById('pwa-reload-btn').addEventListener('click', () => {
+      navigator.serviceWorker.controller.postMessage({ type: 'SKIP_WAITING' });
+      window.location.reload();
+    });
+    setTimeout(() => notification.remove(), 10000);
+  }
+
+  function checkInstallation() {
+    if (window.matchMedia('(display-mode: standalone)').matches || window.navigator.standalone) {
+      isInstalled = true;
+      console.log('📱 App ejecutándose como PWA instalada');
+      document.body.classList.add('pwa-installed');
+    }
+  }
+
+  function setupInstallPrompt() {
+    window.addEventListener('beforeinstallprompt', (e) => {
+      console.log('💾 Prompt de instalación disponible');
+      e.preventDefault();
+      deferredPrompt = e;
+      showInstallButton();
+    });
+
+    window.addEventListener('appinstalled', () => {
+      console.log('✅ PWA instalada exitosamente');
+      isInstalled = true;
+      deferredPrompt = null;
+      hideInstallButton();
+      showInstalledMessage();
+    });
+  }
+
+  function showInstallButton() {
+    const installBtn = document.createElement('button');
+    installBtn.id = 'pwa-install-btn';
+    installBtn.className = 'pwa-install-button';
+    installBtn.innerHTML = `
+      <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+        <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
+        <polyline points="7 10 12 15 17 10"></polyline>
+        <line x1="12" y1="15" x2="12" y2="3"></line>
+      </svg>
+      <span>Instalar App</span>
+    `;
+    
+    installBtn.addEventListener('click', async () => {
+      if (!deferredPrompt) return;
+      deferredPrompt.prompt();
+      const { outcome } = await deferredPrompt.userChoice;
+      console.log(`Usuario ${outcome === 'accepted' ? 'aceptó' : 'rechazó'} la instalación`);
+      deferredPrompt = null;
+      if (outcome === 'accepted') hideInstallButton();
+    });
+
+    document.body.appendChild(installBtn);
+  }
+
+  function hideInstallButton() {
+    const btn = document.getElementById('pwa-install-btn');
+    if (btn) btn.remove();
+  }
+
+  function showInstalledMessage() {
+    const message = document.createElement('div');
+    message.className = 'pwa-success-message';
+    message.innerHTML = `
+      <div class="pwa-success-content">
+        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <polyline points="20 6 9 17 4 12"></polyline>
+        </svg>
+        <span>¡App instalada correctamente!</span>
+      </div>
+    `;
+    document.body.appendChild(message);
+    setTimeout(() => message.remove(), 3000);
+  }
+
+  function setupOnlineOfflineListeners() {
+    window.addEventListener('online', handleOnline);
+    window.addEventListener('offline', handleOffline);
+    if (!navigator.onLine) handleOffline();
+  }
+
+  function handleOnline() {
+    console.log('🌐 Conexión restaurada');
+    document.body.classList.remove('offline-mode');
+    showConnectionStatus('online');
+  }
+
+  function handleOffline() {
+    console.log('📵 Sin conexión - Modo offline');
+    document.body.classList.add('offline-mode');
+    showConnectionStatus('offline');
+  }
+
+  function showConnectionStatus(status) {
+    const existing = document.querySelector('.connection-status');
+    if (existing) existing.remove();
+
+    const statusBar = document.createElement('div');
+    statusBar.className = `connection-status ${status}`;
+    statusBar.innerHTML = status === 'online' 
+      ? '<span>🌐 Conexión restaurada</span>'
+      : '<span>📵 Modo offline - Los datos se guardan localmente</span>';
+    
+    document.body.appendChild(statusBar);
+    setTimeout(() => statusBar.remove(), 3000);
+  }
+
+  window.PWA = {
+    isInstalled: () => isInstalled,
+    isOnline: () => navigator.onLine,
+    canInstall: () => !!deferredPrompt,
+    promptInstall: () => {
+      if (deferredPrompt) {
+        const btn = document.getElementById('pwa-install-btn');
+        if (btn) btn.click();
+      }
+    }
+  };
+
+  console.log('🚀 PWA Manager inicializado');
+})();
+</script>
+
 <style is:global>
+/* Estilos para PWA - Instalación y notificaciones */
+.pwa-install-button {
+  position: fixed;
+  bottom: 20px;
+  right: 20px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 12px 20px;
+  background: #007AFF;
+  color: white;
+  border: none;
+  border-radius: 24px;
+  font-weight: 600;
+  font-size: 14px;
+  box-shadow: 0 4px 12px rgba(0, 122, 255, 0.3);
+  cursor: pointer;
+  z-index: 9999;
+  transition: all 0.3s ease;
+  animation: slideInUp 0.5s ease;
+}
+
+.pwa-install-button:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 6px 16px rgba(0, 122, 255, 0.4);
+}
+
+.pwa-install-button:active {
+  transform: scale(0.95);
+}
+
+.pwa-update-notification {
+  position: fixed;
+  top: 20px;
+  right: 20px;
+  z-index: 10000;
+  animation: slideInRight 0.4s ease;
+}
+
+.pwa-update-content {
+  background: white;
+  padding: 16px 20px;
+  border-radius: 16px;
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.15);
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  min-width: 300px;
+}
+
+.pwa-update-content p {
+  margin: 0;
+  font-weight: 600;
+  color: #1D1D1F;
+  flex: 1;
+}
+
+.pwa-update-content button {
+  background: #007AFF;
+  color: white;
+  border: none;
+  padding: 8px 16px;
+  border-radius: 8px;
+  font-weight: 600;
+  font-size: 14px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.pwa-update-content button:hover {
+  background: #0071E3;
+}
+
+.pwa-success-message {
+  position: fixed;
+  top: 20px;
+  left: 50%;
+  transform: translateX(-50%);
+  z-index: 10000;
+  animation: slideInDown 0.4s ease;
+}
+
+.pwa-success-content {
+  background: #34C759;
+  color: white;
+  padding: 12px 24px;
+  border-radius: 16px;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  font-weight: 600;
+  box-shadow: 0 4px 12px rgba(52, 199, 89, 0.3);
+}
+
+.connection-status {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  padding: 12px;
+  text-align: center;
+  font-weight: 600;
+  font-size: 14px;
+  z-index: 9998;
+  animation: slideInDown 0.3s ease;
+}
+
+.connection-status.online {
+  background: #34C759;
+  color: white;
+}
+
+.connection-status.offline {
+  background: #FF9500;
+  color: white;
+}
+
+body.offline-mode {
+  position: relative;
+}
+
+body.pwa-installed {
+  position: relative;
+}
+
+@media (prefers-color-scheme: dark) {
+  .pwa-update-content {
+    background: #1C1C1E;
+    box-shadow: 0 8px 24px rgba(0, 0, 0, 0.5);
+  }
+
+  .pwa-update-content p {
+    color: #FFFFFF;
+  }
+}
+
+@keyframes slideInUp {
+  from {
+    opacity: 0;
+    transform: translateY(20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes slideInRight {
+  from {
+    opacity: 0;
+    transform: translateX(20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateX(0);
+  }
+}
+
+@keyframes slideInDown {
+  from {
+    opacity: 0;
+    transform: translate(-50%, -20px);
+  }
+  to {
+    opacity: 1;
+    transform: translate(-50%, 0);
+  }
+}
+
+@media (max-width: 768px) {
+  .pwa-install-button {
+    bottom: 16px;
+    right: 16px;
+    padding: 10px 16px;
+    font-size: 13px;
+  }
+
+  .pwa-update-notification {
+    top: 16px;
+    right: 16px;
+    left: 16px;
+  }
+
+  .pwa-update-content {
+    min-width: auto;
+  }
+}
+</style><style is:global>
 	* {
 		margin: 0;
 		padding: 0;
